@@ -5,7 +5,7 @@ const app = express()
 
 app.listen(8080, () => console.log('listening..'));
 
-app.get('/app/goals/', async (req, res) => {
+app.get('/api/goals/', async (req, res) => {
     try {
         const result = await goals.find(req.query)
         res.json(result)
@@ -15,7 +15,7 @@ app.get('/app/goals/', async (req, res) => {
     }    
 })
 
-app.get('/app/goals/:date', async (req, res) => {
+app.get('/api/goals/:date', async (req, res) => {
 
     console.log(req.params)
     const query = req.query || {}
