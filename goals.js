@@ -38,7 +38,7 @@ const parseDate = (fileName) => {
         return new Date(
             parsedDate[1], 
             parseInt(parsedDate[2]) - 1, 
-            parseInt(parsedDate[3]) + 1)
+            parseInt(parsedDate[3]))
     }
     return new Date()
 }
