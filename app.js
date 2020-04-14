@@ -3,7 +3,7 @@ const goals = require('./goals')
 
 const app = express()
 
-app.listen(5000, () => console.log('listening..'));
+app.listen(8080, () => console.log('listening..'));
 
 app.get('/app/goals/', async (req, res) => {
     try {
