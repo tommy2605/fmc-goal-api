@@ -33,14 +33,10 @@ const readGoal = async (fileName) => {
 }
 
 const parseDate = (fileName) => {
-    const parsedDate = fileName.match(/(\d{4})(\d{2})(\d{2})/i)
+    const parsedDate = fileName.match(/(\d{4})(\d{2})(\d{2})/)
     if (parsedDate) {
-        return new Date(
-            parsedDate[1], 
-            parseInt(parsedDate[2]) - 1, 
-            parseInt(parsedDate[3]))
+        return parsedDate[0]
     }
-    return new Date()
 }
 
 const parseCulture = (fileName) => {

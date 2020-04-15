@@ -6,6 +6,7 @@ const app = express()
 app.listen(8080, () => console.log('listening..'));
 
 app.get('/api/goals/', async (req, res) => {
+    console.log(new Date(), 'handling request..')
     try {
         const result = await goals.find(req.query)
         res.json(result)
