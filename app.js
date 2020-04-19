@@ -11,7 +11,7 @@ app.get('/api/goals/', async (req, res) => {
         const result = await goals.find(req.query)
         res.json(result)
     } catch (err) {
-        console.err(err)
+        console.error(err)
         res.sendStatus(500)
     }    
 })

@@ -3,7 +3,7 @@ const path = require('path')
 
 
 const find = async (query) => {
-    const { culture, date, after } = query || {}
+    const { culture } = query || {}
 
     const files = await fs.readdir('./data')
     const goalsPromises = files
@@ -12,13 +12,9 @@ const find = async (query) => {
 
     const goals = await Promise.all(goalsPromises)
 
-    const queryDate = date ? parseDate(date) : undefined
-    const afterDate = after ? parseDate(after) : undefined
-
     return goals
         .filter(goal => !culture || goal.culture === culture.toLowerCase())
-        .filter(goal => !queryDate || goal.publishDate.valueOf() === queryDate.valueOf())
-        .filter(goal => !afterDate || goal.publishDate.valueOf() > afterDate.valueOf())
+        .sort((a,b) => parseInt(b.publishDate) - parseInt(a.publishDate))
 }
 
 const readGoal = async (fileName) => {
