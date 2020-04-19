@@ -31,4 +31,3 @@ app.get('/api/goals/:date', async (req, res) => {
     }
     
 })
-
