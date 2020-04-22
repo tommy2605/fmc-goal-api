@@ -32,4 +32,4 @@ app.get('/api/goals/:date', async (req, res) => {
     
 })
 
-app.use(express.static('./static'))
+app.use('/privacy_policy', express.static('./static/privacy_policy'))
