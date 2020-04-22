@@ -31,3 +31,5 @@ app.get('/api/goals/:date', async (req, res) => {
     }
     
 })
+
+app.use(express.static('./static'))
