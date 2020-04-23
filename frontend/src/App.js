@@ -1,30 +1,23 @@
 import React, {useState} from 'react';
-import {Editor, EditorState, RichUtils,  convertToRaw } from 'draft-js';
-import draftToHtml from 'draftjs-to-html'
+import GoalEditor from './components/GoalEditor';
 
 const App = () => {
 
-  const [editorState, setEditorState] = useState(EditorState.createEmpty())
-
-  const handleKeyCommand = (command, editorState) => {
-    const newState = RichUtils.handleKeyCommand(editorState, command)
-    if (newState) {
-      setEditorState(newState)
-    }
-  }
-
-  const rawContentState = convertToRaw(editorState.getCurrentContent());
-
-  const markup = draftToHtml(rawContentState)
-
   return (
-    <div>
-      <pre>{markup}</pre>
-      <Editor 
-      editorState={editorState}
-      onChange={value => setEditorState(value)}
-      handleKeyCommand={(cmd, state) => handleKeyCommand(cmd, state)}
-      />
+    <div 
+      style={{
+        padding: '30px'
+      }}>
+      <div 
+        style={{
+          width: '600px',
+          height: '500px',
+          padding: '20px',
+          backgroundColor: '#f5f5f5'
+        }}>
+        <GoalEditor 
+        />
+      </div>
     </div>)
 }
 
