@@ -1,26 +1,48 @@
 //@ts-check
-const CosmosClient = require('@azure/cosmos').CosmosClient
+const CosmosClient = require("@azure/cosmos").CosmosClient;
 
-const config = require('./config')
-const url = require('url')
+const config = require("./config");
+const url = require("url");
+const uniqid = require("uniqid");
 
-const endpoint = config.endpoint
-const key = config.key
+const endpoint = config.endpoint;
+const key = config.key;
 
-const databaseId = config.database.id
-const containerId = config.container.id
-const partitionKey = { kind: 'Hash', paths: ['/title'] }
+const databaseId = config.database.id;
+const containerId = config.container.id;
+const partitionKey = { kind: "Hash", paths: ["/title"] };
 
-const client = new CosmosClient({ endpoint, key })
+const client = new CosmosClient({ endpoint, key });
+
+class Cache {
+
+  constructor() {
+      this.data = []
+  }
+
+  get isValid() {
+    if (!this.lastFetch) return false
+    const FiveMinutesInMSecs = 5 * 60 * 1000;
+    const now = new Date();
+    return now.valueOf() - this.lastFetch.valueOf() < FiveMinutesInMSecs;
+  }
+
+  reset(newData) {
+    this.data = newData;
+    this.lastFetch = new Date()
+  }
+}
+
+const cache = new Cache()
 
 /**
  * Create the database if it does not exist
  */
 async function createDatabase() {
   const { database } = await client.databases.createIfNotExists({
-    id: databaseId
-  })
-  console.log(`Created database:\n${database.id}\n`)
+    id: databaseId,
+  });
+  console.log(`Created database:\n${database.id}\n`);
 }
 
 /**
@@ -29,8 +51,8 @@ async function createDatabase() {
 async function readDatabase() {
   const { resource: databaseDefinition } = await client
     .database(databaseId)
-    .read()
-  console.log(`Reading database:\n${databaseDefinition.id}\n`)
+    .read();
+  console.log(`Reading database:\n${databaseDefinition.id}\n`);
 }
 
 /**
@@ -42,8 +64,8 @@ async function createContainer() {
     .containers.createIfNotExists(
       { id: containerId, partitionKey },
       { offerThroughput: 400 }
-    )
-  console.log(`Created container:\n${config.container.id}\n`)
+    );
+  console.log(`Created container:\n${config.container.id}\n`);
 }
 
 /**
@@ -53,8 +75,8 @@ async function readContainer() {
   const { resource: containerDefinition } = await client
     .database(databaseId)
     .container(containerId)
-    .read()
-  console.log(`Reading container:\n${containerDefinition.id}\n`)
+    .read();
+  console.log(`Reading container:\n${containerDefinition.id}\n`);
 }
 
 /**
@@ -65,14 +87,13 @@ async function scaleContainer() {
   const { resource: containerDefinition } = await client
     .database(databaseId)
     .container(containerId)
-    .read()
-  const {resources: offers} = await client.offers.readAll().fetchAll();
-  
+    .read();
+  const { resources: offers } = await client.offers.readAll().fetchAll();
+
   const newRups = 500;
   for (var offer of offers) {
-    if (containerDefinition._rid !== offer.offerResourceId)
-    {
-        continue;
+    if (containerDefinition._rid !== offer.offerResourceId) {
+      continue;
     }
     offer.content.offerThroughput = newRups;
     const offerToReplace = client.offer(offer.id);
@@ -85,55 +106,83 @@ async function scaleContainer() {
 /**
  * Create family item if it does not exist
  */
-const createItem = async itemBody => {
+const createItem = async (itemBody) => {
+  itemBody.id = uniqid();
   const { item } = await client
     .database(databaseId)
     .container(containerId)
-    .items.upsert(itemBody)
-  console.log(`Created family item with id:\n${itemBody.id}\n`)
-}
+    .items.upsert(itemBody);
+  console.log(`Created family item with id:\n${itemBody.id}\n`);
+};
 
 /**
  * Query the container using SQL
  */
-async function queryContainer() {
-  console.log(`Querying container:\n${config.container.id}`)
+const queryById = async (id) => {
+  console.log(`Querying container:\n${config.container.id}`);
 
-  // query to return all children in a family
-  // Including the partition key value of lastName in the WHERE filter results in a more efficient query
   const querySpec = {
-    query: 'SELECT VALUE r.children FROM root r WHERE r.lastName = @lastName',
+    query: `SELECT VALUE r 
+            FROM root r 
+            WHERE r.id = @id`,
     parameters: [
       {
-        name: '@lastName',
-        value: 'Andersen'
-      }
-    ]
-  }
+        name: "@id",
+        value: id,
+      },
+    ],
+  };
 
   const { resources: results } = await client
     .database(databaseId)
     .container(containerId)
     .items.query(querySpec)
-    .fetchAll()
-  for (var queryResult of results) {
-    let resultString = JSON.stringify(queryResult)
-    console.log(`\tQuery returned ${resultString}\n`)
-  }
-}
+    .fetchAll();
+
+  return results.map(cleanupItem);
+};
+
+const cleanupItem = (item) => {
+  delete item._rid;
+  delete item._etag;
+  delete item._self;
+  delete item._attachments;
+  delete item._ts;
+  return item;
+};
+
+const queryAll = async (id) => {
+  if (cache.isValid) return cache.data;
+  console.log(`Querying container:\n${config.container.id}`);
+
+  const querySpec = {
+    query: `SELECT VALUE r 
+            FROM root r`,
+  };
+
+  const { resources: results } = await client
+    .database(databaseId)
+    .container(containerId)
+    .items.query(querySpec)
+    .fetchAll();
+
+  const cleanResult = results.map(cleanupItem);
+  cache.reset(cleanResult);
+  return cleanResult;
+};
 
 /**
  * Replace the item by ID.
  */
 async function replaceItem(itemBody) {
-  console.log(`Replacing item:\n${itemBody.id}\n`)
+  console.log(`Replacing item:\n${itemBody.id}\n`);
   // Change property 'grade'
-  itemBody.children[0].grade = 6
+  itemBody.children[0].grade = 6;
   const { item } = await client
     .database(databaseId)
     .container(containerId)
     .item(itemBody.id, itemBody.Country)
-    .replace(itemBody)
+    .replace(itemBody);
 }
 
 /**
@@ -144,15 +193,15 @@ async function deleteItem(itemBody) {
     .database(databaseId)
     .container(containerId)
     .item(itemBody.id, itemBody.Country)
-    .delete(itemBody)
-  console.log(`Deleted item:\n${itemBody.id}\n`)
+    .delete(itemBody);
+  console.log(`Deleted item:\n${itemBody.id}\n`);
 }
 
 /**
  * Cleanup the database and collection on completion
  */
 async function cleanup() {
-  await client.database(databaseId).delete()
+  await client.database(databaseId).delete();
 }
 
 /**
@@ -160,28 +209,30 @@ async function cleanup() {
  * @param {string} message - The message to display
  */
 function exit(message) {
-  console.log(message)
-  console.log('Press any key to exit')
-  process.stdin.setRawMode(true)
-  process.stdin.resume()
-  process.stdin.on('data', process.exit.bind(process, 0))
+  console.log(message);
+  console.log("Press any key to exit");
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  process.stdin.on("data", process.exit.bind(process, 0));
 }
 
 const setup = async () => {
-    try {
-        await createDatabase()
-        await createContainer()
-        await readContainer()
-        await scaleContainer()
-    } catch (err) {
-        console.error(err)
-    }    
-}
+  try {
+    await createDatabase();
+    await createContainer();
+    await readContainer();
+    await scaleContainer();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 module.exports = {
-    setup,
-    createItem
-}
+  setup,
+  createItem,
+  queryById,
+  queryAll,
+};
 
 /*
 createDatabase()

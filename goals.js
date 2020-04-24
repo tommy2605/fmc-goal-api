@@ -70,5 +70,6 @@ const parseCulture = (fileName) => {
 }
 
 module.exports = {
-    find
+    find,
+    publishDateInCulture
 }

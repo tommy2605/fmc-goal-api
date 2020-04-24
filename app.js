@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const goals = require('./goals')
 const database = require('./database')
@@ -5,13 +6,19 @@ const bodyParser = require('body-parser')
 
 const app = express()
 app.use(bodyParser.json())
-app.listen(8080, () => console.log('listening..'));
-database.setup().then(() => console.log('Database is ready'))
+
+// bootstrap
+;(async () => {
+    await database.setup()
+    console.log('Database is ready!')
+    app.listen(process.env.PORT, () => console.log(`Server is ready at port ${process.env.PORT}!`));
+})()
+
 
 app.get('/api/goals/', async (req, res) => {
-    console.log(new Date(), 'handling request..')
+    console.log('GET /api/goals/')
     try {
-        const result = await goals.find(req.query)
+        const result = await database.queryAll()
         res.json(result)
     } catch (err) {
         console.error(err)
@@ -19,26 +26,12 @@ app.get('/api/goals/', async (req, res) => {
     }    
 })
 
-app.get('/api/goals/:date', async (req, res) => {
-
-    console.log(req.params)
-    const query = req.query || {}
-    if (req.params.date) query.date = req.params.date
-
-    try {
-        const result = await goals.find(query)
-        res.json(result)
-    } catch (err) {
-        console.err(err)
-        res.sendStatus(500)
-    }
-    
-})
-
 app.post('/api/goals', async (req, res) => {
-    console.log(req.body)
+    console.log('POST /api/goals')
     try {
-        validate(req.body)
+        const item = req.body
+        validate(item)
+        database.createItem(item)
         res.status(200).send('ok')
     } catch (err) {
         console.error(err)
@@ -56,9 +49,32 @@ const validate = item => {
     try {
         const date = new Date(item.publishDate)
         if (date.getDay() !== 0) throw `Bad publishDate`
+        const publishDate = date.formal()
+        item.publishDate = publishDate
+        item.publishDateInCulture = goals.publishDateInCulture(`${publishDate}_${item.culture}`)
     } catch {
         throw `Bad publishDate`
     }
+}
+
+Number.prototype.formal = function(length) {
+    let result = this.toString()
+    while (result.length < length) {
+        result = `0${result}`
+    }
+    return result
+}
+
+Date.prototype.formalDate = function() {
+    return this.getDate().formal(2)
+}
+
+Date.prototype.formalMonth = function() {
+    return (this.getMonth() + 1).formal(2)
+}
+
+Date.prototype.formal = function () {
+    return `${this.getFullYear()}${this.formalMonth()}${this.formalDate()}`
 }
 
 app.use('/privacy_policy', express.static('./static/privacy_policy'))

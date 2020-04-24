@@ -1,7 +1,7 @@
-var config = {}
-
-config.endpoint = 'https://fmc-goals.documents.azure.com:443/'
-config.key = '8HDz60fJ4xaa8OP1WwqfFqLJgYDMUfGCn7B94So0SC20pEfHx9DG8IwA7FYaJvYnVyG4ujXKOMFJj2spt9nbfA=='
+const config = {
+  endpoint: process.env.DB_ENDPOINT,
+  key: process.env.DB_KEY
+}
 
 config.database = {
   id: 'FMC'
