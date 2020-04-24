@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { Editor, EditorState, RichUtils, convertToRaw } from 'draft-js';
+import { Editor, EditorState, ContentState, RichUtils, convertToRaw, convertFromHTML } from 'draft-js';
 import draftToHtml from 'draftjs-to-html'
 import './TextEditor.css'
 
-const TextEditor = ({onChange}) => {
+const TextEditor = ({html, onChange}) => {
+    const blocksFromHTML = convertFromHTML(html)
 
-    const [editorState, setEditorState] = useState(EditorState.createEmpty())
+    const state = ContentState.createFromBlockArray(
+        blocksFromHTML.contentBlocks,
+        blocksFromHTML.entityMap,
+    )
+
+    const [editorState, setEditorState] = useState(EditorState.createWithContent(state))
 
     const handleKeyCommand = (command, editorState) => {
         const newState = RichUtils.handleKeyCommand(editorState, command)

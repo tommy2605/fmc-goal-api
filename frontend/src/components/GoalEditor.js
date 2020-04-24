@@ -11,7 +11,7 @@ const GoalEditor = (props) => {
 
   const [title, setTitle] = useState()
   const [date, setDate] = useState(nextSunday().valueOf())
-  const [content, setContent] = useState()
+  const [content, setContent] = useState('')
   const [lang, setLang] = useState()
 
   const canPublish = () => {
@@ -36,6 +36,7 @@ const GoalEditor = (props) => {
       </div>
       
       <TextEditor
+        html={content}
         onChange={html => {
           setContent(html)
           const text = html.replace(/<\/?[a-z0-9]+>/g,' ')
