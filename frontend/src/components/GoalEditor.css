@@ -6,6 +6,10 @@ div.GoalEditor {
     flex-direction: column;
 }
 
+div.TextEditor {
+    margin: 10px;
+}
+
 div.topNavigation {
     padding: 10px;
 }
