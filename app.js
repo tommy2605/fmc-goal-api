@@ -26,7 +26,7 @@ app.get('/api/goals/', async (req, res) => {
     console.log('GET /api/goals/')
     try {
         const result = await database.queryAll()
-        res.json(result)
+        res.json(result.sort((a,b) => parseInt(b.publishDate) - parseInt(a.publishDate)))
     } catch (err) {
         console.error(err)
         res.sendStatus(500)
