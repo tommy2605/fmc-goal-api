@@ -5,6 +5,8 @@ const database = require("./database");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
+const mammoth = require('mammoth');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
@@ -98,15 +100,58 @@ const storage = multer.diskStorage({
     cb(null, "./temp"); //here we specify the destination. in this case i specified the current directory
   },
   filename: function (req, file, cb) {
-    console.log(file); //log the file object info in console
-    cb(null, file.originalname); //here we specify the file saving name. in this case.
-    //i specified the original file name .you can modify this name to anything you want
+    req.uploadedFile = path.join('./temp', file.originalname)
+    cb(null, file.originalname); 
   },
 });
 
 const uploadDisk = multer({ storage })
 
-app.post("/upload", uploadDisk.single("docx"), (req, res) => {
-    console.log(" file disk uploaded");
-    res.send("file disk upload success");
-  });
+app.post("/api/goals/convert", uploadDisk.single("docx"), async (req, res) => {
+    try {
+        const result = await mammoth.convertToHtml({path: req.uploadedFile})
+        if (result.messages && result.messages.length > 0) {
+            console.error(result.messages)
+            res.status(404).send("Bad document")
+            return
+        } 
+        res.json(postProcessGoal(result.value, req.uploadedFile))    
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Ooh la la..')
+    }
+});
+
+const postProcessGoal = (html, fileName) => {
+    const parseTitle = html.match(/<p><strong>([A-Z\s]+)<\/strong><\/p>/)
+    const parseDate = html.match(/<p>Goal\.(\d{2}).(\d{2}).(\d{4})<\/p>/)
+    const parseCulture = fileName.match(/_([A-Z]{2}).docx/)
+
+    if (!parseTitle) throw "Bad document title"
+    if (!parseDate) throw "Bad document date"
+    if (!parseCulture) throw "Bad document culture"
+
+    const title = parseTitle[1]
+    const publishDate = `${parseDate[3]}${parseDate[2]}${parseDate[1]}`
+    const content = html
+        .replace(parseTitle[0], '')
+        .replace(parseDate[0], '')
+        .replace( // make H1
+            /<p><strong>([A-Z\s]+)<\/strong><\/p>/g, 
+            (_, header) => `<h1>${header.trim()}</h1>`    
+        )
+        .replace(/[\n\r]/g, '')
+        .trim()
+
+    const culture = parseCulture[1].toLowerCase()
+
+    return {
+        publishDate,
+        culture,
+        publishDateInCulture: goals.publishDateInCulture(`${publishDate}_${culture.toUpperCase()}`),
+        title,
+        content
+    }
+}
+
+ 
