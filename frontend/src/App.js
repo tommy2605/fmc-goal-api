@@ -1,5 +1,19 @@
 import React from 'react';
 import GoalEditor from './components/GoalEditor';
+import axios from 'axios'
+import path from 'path'
+
+const publish = async item => {
+  console.log(item)
+  console.log(process.env.REACT_APP_API)
+  try {
+    await axios.post(process.env.REACT_APP_API + 'api/goals', item)
+    alert('published')
+  } catch {
+    alert('not published')
+  }
+
+}
 
 const App = () => {
 
@@ -10,7 +24,7 @@ const App = () => {
       }}>
       <div 
         style={{
-          width: '600px',
+          width: '900px',
           height: '500px',
           padding: '20px',
           backgroundColor: '#f5f5f5'
@@ -24,7 +38,7 @@ const App = () => {
             title: 'this is not just another title'
           }}
           
-          onPublish={item => console.log(item)}
+          onPublish={item => publish(item)}
         />
       </div>
     </div>)

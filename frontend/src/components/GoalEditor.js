@@ -7,6 +7,12 @@ import InputChoice from "./InputChoice";
 
 import "./GoalEditor.css";
 
+const processHtml = (html) => {
+  return html
+    .replace(/<h3>/g, '<h1>')
+    .replace(/<\/h3>/g, '</h1>')
+}
+
 const getItem = (props) => {
   const empty = {
     publishDate: nextSunday(),
@@ -74,12 +80,12 @@ const GoalEditor = (props) => {
       </div>
 
       <TextEditor
-        html={content}
+        html={item.content}
         onChange={(html) => {
           setContent(html);
           const text = html.replace(/<\/?[a-z0-9]+>/g, " ");
           const lang = franc(text);
-          if (["ind", "nld", "eng"].includes(lang)) setLang(lang);
+          setLang(["nld", "eng"].includes(lang) ? lang : "ind") 
         }}
       />
 
@@ -98,7 +104,7 @@ const GoalEditor = (props) => {
             const newItem = Object.assign(props.item || {}, {
               publishDate: new Date(date),
               title,
-              content,
+              content: processHtml(content),
               culture: toCulture(lang)
             })
             props.onPublish(newItem)

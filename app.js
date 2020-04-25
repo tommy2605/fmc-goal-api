@@ -3,15 +3,23 @@ const express = require('express')
 const goals = require('./goals')
 const database = require('./database')
 const bodyParser = require('body-parser')
+const cors = require('cors')
 
 const app = express()
 app.use(bodyParser.json())
+app.use(cors())
 
 // bootstrap
 ;(async () => {
     await database.setup()
     console.log('Database is ready!')
     app.listen(process.env.PORT, () => console.log(`Server is ready at port ${process.env.PORT}!`));
+
+    // migrate to cosmos db
+    /*
+    const items = await goals.find({})
+    items.forEach(database.createItem)
+    */
 })()
 
 app.get('/api/goals/', async (req, res) => {
