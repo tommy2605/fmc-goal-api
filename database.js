@@ -2,7 +2,6 @@
 const CosmosClient = require("@azure/cosmos").CosmosClient;
 
 const config = require("./config");
-const url = require("url");
 const uniqid = require("uniqid");
 
 const endpoint = config.endpoint;
@@ -10,7 +9,12 @@ const key = config.key;
 
 const databaseId = config.database.id;
 const containerId = config.container.id;
-const partitionKey = { kind: "Hash", paths: ["/title"] };
+const partitionKey = { kind: "Hash", paths: ["/culture"] };
+const uniqueKeyPolicy = {
+    uniqueKeys: [
+        { paths: ['/publishDate', '/culture'] }
+    ]
+}
 
 const client = new CosmosClient({ endpoint, key });
 
@@ -62,7 +66,7 @@ async function createContainer() {
   const { container } = await client
     .database(databaseId)
     .containers.createIfNotExists(
-      { id: containerId, partitionKey },
+      { id: containerId, partitionKey, uniqueKeyPolicy },
       { offerThroughput: 400 }
     );
   console.log(`Created container:\n${config.container.id}\n`);
@@ -108,11 +112,16 @@ async function scaleContainer() {
  */
 const createItem = async (itemBody) => {
   itemBody.id = uniqid();
+  try {
   const { item } = await client
     .database(databaseId)
     .container(containerId)
     .items.upsert(itemBody);
   console.log(`Created family item with id:\n${itemBody.id}\n`);
+  } catch(err) {
+      console.error(err)
+      throw "Insert is not allowed"
+  }
 };
 
 /**
@@ -221,7 +230,6 @@ const setup = async () => {
     await createDatabase();
     await createContainer();
     await readContainer();
-    await scaleContainer();
   } catch (err) {
     console.error(err);
   }
@@ -233,23 +241,3 @@ module.exports = {
   queryById,
   queryAll,
 };
-
-/*
-createDatabase()
-  .then(() => readDatabase())
-  .then(() => createContainer())
-  .then(() => readContainer())
-  .then(() => scaleContainer())
-//  .then(() => createItem(item))
-//   .then(() => createFamilyItem(config.items.Wakefield))
-//   .then(() => queryContainer())
-//   .then(() => replaceFamilyItem(config.items.Andersen))
-//   .then(() => queryContainer())
-//   .then(() => deleteFamilyItem(config.items.Andersen))
-  .then(() => {
-    exit(`Completed successfully`)
-  })
-  .catch(error => {
-    exit(`Completed with error ${JSON.stringify(error)}`)
-  })
-*/

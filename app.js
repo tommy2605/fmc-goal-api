@@ -14,7 +14,6 @@ app.use(bodyParser.json())
     app.listen(process.env.PORT, () => console.log(`Server is ready at port ${process.env.PORT}!`));
 })()
 
-
 app.get('/api/goals/', async (req, res) => {
     console.log('GET /api/goals/')
     try {
@@ -31,11 +30,12 @@ app.post('/api/goals', async (req, res) => {
     try {
         const item = req.body
         validate(item)
-        database.createItem(item)
+        await database.createItem(item)
         res.status(200).send('ok')
     } catch (err) {
         console.error(err)
         res.status(400).send(err)
+        console.log(err)
     }
 })
 
