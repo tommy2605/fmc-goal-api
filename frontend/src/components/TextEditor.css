@@ -1,0 +1,11 @@
+div.DraftEditor-root {
+}
+
+div.TextEditor {
+    background-color: #f1fcff;
+    border: #399fe4 1px solid;
+    border-radius: 2px;
+    overflow: scroll;
+    padding: 10px;
+    flex-grow: 1;
+}

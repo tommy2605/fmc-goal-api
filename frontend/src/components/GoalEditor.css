@@ -1,0 +1,19 @@
+div.GoalEditor {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+div.TextEditor {
+    margin: 10px;
+}
+
+div.topNavigation {
+    padding: 10px;
+}
+
+div.bottomNavigation {
+    padding: 10px;
+}
