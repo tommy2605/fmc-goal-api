@@ -4,5 +4,8 @@
         ".vscode{,/**}"
     ],
     "appService.defaultWebAppToDeploy": "/subscriptions/fc5100f3-32bd-4d8f-a699-96c55bc05bc6/resourceGroups/fmc-goal/providers/Microsoft.Web/sites/fmc-goal-api",
-    "appService.deploySubpath": ""
+    "appService.deploySubpath": "",
+    "cSpell.words": [
+        "draftjs"
+    ]
 }
