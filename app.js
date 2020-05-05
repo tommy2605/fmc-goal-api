@@ -7,6 +7,7 @@ const cors = require("cors");
 const multer = require("multer");
 const mammoth = require('mammoth');
 const path = require('path');
+const gift = require('./gift')
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,10 +23,17 @@ app.use("/privacy_policy", express.static("./static/privacy_policy"));
   );
 
   // migrate to cosmos db
-  /*
+  
+    /*
     const items = await goals.find({})
-    items.forEach(database.createItem)
+    items
+      .filter(i => i.publishDate.match(/20200503/))
+      .forEach(i => {
+        console.log('inserting ', i)
+        database.createItem(i)
+      })
     */
+    
 })();
 
 app.get("/api/goals/", async (req, res) => {
@@ -106,6 +114,18 @@ const storage = multer.diskStorage({
 });
 
 const uploadDisk = multer({ storage })
+
+app.get("/api/gifts", async (req, res) => {
+  try {
+    const links = await gift.getLinks()
+    if (links)
+      res.json(links)
+    else
+      res.status(404).send('Not found')
+  } catch (e) {
+    res.status(500).send('Oh la la..')
+  }
+})
 
 app.post("/api/goals/convert", uploadDisk.single("docx"), async (req, res) => {
     try {
