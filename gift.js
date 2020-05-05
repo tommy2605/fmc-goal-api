@@ -4,6 +4,35 @@ const tikkiePattern = `<a href="(https:\/\/tikkie\.me\/pay.+?)">(.+?)<\/a>`
 const ingPattern = `<a href="(https:\/\/www\.ing\.nl\/particulier\/betaalverzoek\/.+?)">(.+?)<\/a>`
 const patterns = [tikkiePattern, ingPattern]
 
+const createGift = (url, cityName) => {
+
+    const getIban = () => {
+        switch (cityName) {
+            case 'Delft': return 'NL81 ING B 0006 255 935'
+            case 'Amersfoort': return 'NL67 INGB 0005 3655 33'
+            case 'Amstelveen': return 'NL ...'
+            case 'Den Haag': return 'NL ...'
+        }
+    }
+
+    const getBeneficiary = () => {
+        switch (cityName) {
+            case 'Delft': return 'Delft Christian Fellowship'
+            case 'Amersfoort': return 'Amersfoort Christian Fellowship'
+            case 'Amstelveen': return 'FMC Amstelveen'
+            case 'Den Haag': return 'FMC Den Haag'
+        }
+    }
+
+    return {
+        church: `FMC ${cityName}`,
+        city: cityName,
+        iban: getIban(),
+        beneficiary: getBeneficiary(),
+        url
+    }
+}
+
 const getLinks = async () => {
     console.log('fetching payment links...')
     const response = await axios.get('https://www.fmc-online.nl/sunday')
@@ -20,9 +49,10 @@ const getLinks = async () => {
         .map(match => {
             return {
                 url: match[1],
-                church: match[2].replace(/<\/?\w+?>/g,'')
+                cityName: match[2].replace(/<\/?\w+?>/g,'')
             }
         })
+        .map(g => createGift(g.url, g.cityName))
 }
 
 const twelveHoursInMSecs = 12 * 3600 * 1000
