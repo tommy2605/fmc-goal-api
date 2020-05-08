@@ -23,8 +23,17 @@ const createGift = (url, cityName) => {
             case 'Den Haag': return 'FMC Den Haag'
         }
     }
+    const getOrder = () => {
+        switch (cityName) {
+            case 'Delft': return 1
+            case 'Amersfoort': return 2
+            case 'Amstelveen': return 3
+            case 'Den Haag': return 4
+        }
+    }
 
     return {
+        order: getOrder(),
         church: `FMC ${cityName}`,
         city: cityName,
         iban: getIban(),
